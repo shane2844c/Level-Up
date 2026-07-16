@@ -1,6 +1,7 @@
 import type { AppSupabaseClient } from "@/lib/supabase/types";
 import { isMissingLevelEventsTable, toDataError } from "@/lib/errors";
 import { getLevelFromXp, getLevelProgress, getLevelsGained } from "@/lib/levels";
+import { filterActivityFeed } from "@/lib/transactions";
 import type {
   Category,
   CategoryDetailStats,
@@ -59,6 +60,7 @@ async function fetchGoodHabitTransactions(supabase: AppSupabaseClient) {
     .from("xp_transactions")
     .select("category_id, habit_id, category_xp_change, created_at, habit:habits(name)")
     .eq("transaction_type", "good_habit")
+    .is("reversed_at", null)
     .gt("category_xp_change", 0)
     .order("created_at", { ascending: true });
 
@@ -326,6 +328,7 @@ export async function getCategoryDetailStats(
     .select("category_xp_change, created_at")
     .eq("category_id", categoryId)
     .eq("transaction_type", "good_habit")
+    .is("reversed_at", null)
     .gt("category_xp_change", 0);
 
   if (goodError) throw toDataError(goodError);
@@ -334,7 +337,8 @@ export async function getCategoryDetailStats(
     .from("xp_transactions")
     .select("id", { count: "exact", head: true })
     .eq("category_id", categoryId)
-    .eq("transaction_type", "bad_habit");
+    .eq("transaction_type", "bad_habit")
+    .is("reversed_at", null);
 
   if (badError) throw toDataError(badError);
 
@@ -380,6 +384,7 @@ export async function getCategoryGoodHabitRows(
     .select("category_id, habit_id, category_xp_change, created_at, habit:habits(name)")
     .eq("category_id", categoryId)
     .eq("transaction_type", "good_habit")
+    .is("reversed_at", null)
     .gt("category_xp_change", 0)
     .order("created_at", { ascending: true });
 
@@ -398,10 +403,10 @@ export async function getCategoryTransactions(
     .eq("category_id", categoryId)
     .in("transaction_type", ["good_habit", "bad_habit"])
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(limit * 4);
 
   if (error) throw toDataError(error);
-  return (data ?? []) as XpTransaction[];
+  return filterActivityFeed((data ?? []) as XpTransaction[]).slice(0, limit);
 }
 
 export async function getProgressPageData(supabase: AppSupabaseClient) {

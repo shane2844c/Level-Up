@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { MobileXpBalanceCard } from "@/components/mobile/MobileXpBalanceCard";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/Toast";
+import { getNegativeBalanceMessage } from "@/lib/remove-activity";
 import type { Reward, XpSummary } from "@/lib/types";
 
 interface RewardsClientProps {
@@ -63,6 +64,7 @@ export function RewardsClient({ rewards, currentBalance }: RewardsClientProps) {
     totalLost: 0,
     totalSpent: 0,
   };
+  const negativeMessage = getNegativeBalanceMessage(currentBalance);
 
   const addButton = (
     <button
@@ -89,10 +91,15 @@ export function RewardsClient({ rewards, currentBalance }: RewardsClientProps) {
       <div className="md:hidden mb-6">
         <MobileXpBalanceCard summary={xpSummary} />
       </div>
-      <p className="hidden md:block text-sm text-foreground-secondary mb-6">
-        Available balance:{" "}
-        <span className="text-primary font-semibold">{currentBalance} XP</span>
-      </p>
+      <div className="hidden md:block mb-6">
+        <p className="text-sm text-foreground-secondary">
+          Available balance:{" "}
+          <span className="text-primary font-semibold">{currentBalance} XP</span>
+        </p>
+        {negativeMessage && (
+          <p className="text-sm text-negative mt-2 leading-relaxed">{negativeMessage}</p>
+        )}
+      </div>
 
       {activeRewards.length === 0 ? (
         <EmptyState

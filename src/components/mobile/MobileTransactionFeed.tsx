@@ -6,12 +6,20 @@ import {
   Settings2,
 } from "lucide-react";
 import { cn, formatRelativeTime, formatXp, getTransactionGroupLabel } from "@/lib/utils";
+import {
+  getHabitActivityName,
+  isRemovedActivityDisplay,
+  isReversibleHabitTransaction,
+} from "@/lib/transactions";
+import { TransactionRowMenu } from "@/components/history/TransactionRowMenu";
 import type { XpTransaction } from "@/lib/types";
 
 interface MobileTransactionFeedProps {
   transactions: XpTransaction[];
   emptyMessage?: string;
   compact?: boolean;
+  onRemove?: (tx: XpTransaction) => void;
+  removingId?: string | null;
 }
 
 function getTransactionIcon(type: XpTransaction["transaction_type"]) {
@@ -44,6 +52,8 @@ export function MobileTransactionFeed({
   transactions,
   emptyMessage = "Your XP history will appear here after you log your first habit.",
   compact = false,
+  onRemove,
+  removingId,
 }: MobileTransactionFeedProps) {
   if (transactions.length === 0) {
     return (
@@ -70,48 +80,82 @@ export function MobileTransactionFeed({
           )}
           <ul className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
             {items.map((tx) => {
+              const removed = isRemovedActivityDisplay(tx);
               const Icon = getTransactionIcon(tx.transaction_type);
               const isPositive = tx.bank_xp_change > 0;
+              const canRemove = Boolean(onRemove) && isReversibleHabitTransaction(tx);
 
               return (
-                <li key={tx.id} className="flex items-center gap-3 px-4 py-3.5">
+                <li
+                  key={tx.id}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3.5",
+                    removed && "opacity-60"
+                  )}
+                >
                   <div
                     className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-xl shrink-0",
-                      isPositive ? "bg-positive/15" : "bg-negative/15"
+                      removed
+                        ? "bg-muted/20"
+                        : isPositive
+                          ? "bg-positive/15"
+                          : "bg-negative/15"
                     )}
                   >
                     <Icon
                       className={cn(
                         "h-4 w-4",
-                        isPositive ? "text-positive" : "text-negative"
+                        removed
+                          ? "text-muted"
+                          : isPositive
+                            ? "text-positive"
+                            : "text-negative"
                       )}
                       aria-hidden="true"
                     />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[15px] font-medium text-foreground truncate">
-                      {tx.description}
+                      {removed ? getHabitActivityName(tx) : tx.description}
                     </p>
                     <p className="text-xs text-muted mt-0.5 truncate">
-                      {getTransactionLabel(tx.transaction_type)}
-                      {tx.category ? ` · ${tx.category.name}` : ""}
-                      {compact ? ` · ${formatRelativeTime(tx.created_at)}` : ""}
+                      {removed ? (
+                        <>
+                          Removed activity · Originally {formatXp(tx.bank_xp_change)}
+                        </>
+                      ) : (
+                        <>
+                          {getTransactionLabel(tx.transaction_type)}
+                          {tx.category ? ` · ${tx.category.name}` : ""}
+                          {compact ? ` · ${formatRelativeTime(tx.created_at)}` : ""}
+                        </>
+                      )}
                     </p>
                   </div>
-                  <div className="text-right shrink-0">
-                    <span
-                      className={cn(
-                        "text-sm font-semibold",
-                        isPositive ? "text-positive" : "text-negative"
-                      )}
-                    >
-                      {formatXp(tx.bank_xp_change)}
-                    </span>
-                    {!compact && (
-                      <p className="text-[11px] text-muted mt-0.5">
-                        {formatRelativeTime(tx.created_at)}
-                      </p>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {canRemove && (
+                      <TransactionRowMenu
+                        onRemove={() => onRemove?.(tx)}
+                        disabled={removingId === tx.id}
+                      />
+                    )}
+                    {!removed && (
+                      <div className="text-right">
+                        <span
+                          className={cn(
+                            "text-sm font-semibold",
+                            isPositive ? "text-positive" : "text-negative"
+                          )}
+                        >
+                          {formatXp(tx.bank_xp_change)}
+                        </span>
+                        {!compact && (
+                          <p className="text-[11px] text-muted mt-0.5">
+                            {formatRelativeTime(tx.created_at)}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </li>

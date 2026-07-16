@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn, formatXp } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { logHabit } from "@/lib/data";
+import { logHabit, reverseHabitTransaction } from "@/lib/data";
 import { useToast } from "@/components/ui/Toast";
 import { useLevelUpCelebration } from "@/components/progress/LevelUpCelebration";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { getCrossedLevels } from "@/lib/levels";
+import { isAlreadyRemovedError } from "@/lib/remove-activity";
 import type { Habit } from "@/lib/types";
 
 interface HabitCardProps {
@@ -25,6 +27,8 @@ export function HabitCard({
   mobile = false,
 }: HabitCardProps) {
   const [loading, setLoading] = useState(false);
+  const [undoing, setUndoing] = useState(false);
+  const router = useRouter();
   const { showToast } = useToast();
   const { celebrateLevelUps } = useLevelUpCelebration();
   const online = useOnlineStatus();
@@ -41,7 +45,32 @@ export function HabitCard({
       const supabase = createClient();
       const result = await logHabit(supabase, habit.id);
       const change = result.transaction.bank_xp_change;
-      showToast(`${habit.name}: ${formatXp(change)}`, "success");
+      const signedChange = formatXp(change);
+      showToast(`${habit.name} logged · ${signedChange}`, "success", {
+        durationMs: 8000,
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            if (undoing) return;
+            setUndoing(true);
+            try {
+              await reverseHabitTransaction(supabase, result.transaction.id);
+              showToast("Activity removed and XP corrected.", "success");
+              router.refresh();
+            } catch (err) {
+              const message =
+                err instanceof Error ? err.message : "Failed to remove activity.";
+              if (isAlreadyRemovedError(message)) {
+                showToast("This activity has already been removed.", "error");
+              } else {
+                showToast(message, "error");
+              }
+            } finally {
+              setUndoing(false);
+            }
+          },
+        },
+      });
 
       if (isGood && result.level_ups && result.level_ups.length > 0) {
         celebrateLevelUps(

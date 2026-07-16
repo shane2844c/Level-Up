@@ -6,7 +6,11 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { TransactionList } from "@/components/history/TransactionList";
 import { MobileTransactionFeed } from "@/components/mobile/MobileTransactionFeed";
 import { MobileFilterSheet } from "@/components/mobile/MobileFilterSheet";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useRemoveActivity } from "@/hooks/useRemoveActivity";
+import { filterActivityFeed } from "@/lib/transactions";
+import { getRemoveActivityConfirmContent } from "@/lib/remove-activity";
 import type { Category, XpTransaction } from "@/lib/types";
 
 interface HistoryClientProps {
@@ -19,23 +23,39 @@ export function HistoryClient({ transactions, categories }: HistoryClientProps) 
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [showRemoved, setShowRemoved] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const {
+    removing,
+    pendingTx,
+    confirmOpen,
+    openConfirm,
+    closeConfirm,
+    confirmRemove,
+  } = useRemoveActivity();
+
+  const confirmContent = pendingTx
+    ? getRemoveActivityConfirmContent(pendingTx)
+    : null;
+
   const filtered = useMemo(() => {
-    return transactions.filter((tx) => {
+    const visible = filterActivityFeed(transactions, { showRemoved });
+    return visible.filter((tx) => {
       if (typeFilter !== "all" && tx.transaction_type !== typeFilter) return false;
       if (categoryFilter !== "all" && tx.category_id !== categoryFilter) return false;
       if (startDate && new Date(tx.created_at) < new Date(startDate)) return false;
       if (endDate && new Date(tx.created_at) > new Date(`${endDate}T23:59:59`)) return false;
       return true;
     });
-  }, [transactions, typeFilter, categoryFilter, startDate, endDate]);
+  }, [transactions, typeFilter, categoryFilter, startDate, endDate, showRemoved]);
 
   const activeFilterCount = [
     typeFilter !== "all",
     categoryFilter !== "all",
     startDate,
     endDate,
+    showRemoved,
   ].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -43,7 +63,20 @@ export function HistoryClient({ transactions, categories }: HistoryClientProps) 
     setCategoryFilter("all");
     setStartDate("");
     setEndDate("");
+    setShowRemoved(false);
   };
+
+  const showRemovedToggle = (
+    <label className="flex items-center gap-3 min-h-[44px] cursor-pointer">
+      <input
+        type="checkbox"
+        checked={showRemoved}
+        onChange={(e) => setShowRemoved(e.target.checked)}
+        className="h-4 w-4 rounded border-border accent-primary"
+      />
+      <span className="text-sm text-foreground-secondary">Show removed activities</span>
+    </label>
+  );
 
   return (
     <>
@@ -62,7 +95,7 @@ export function HistoryClient({ transactions, categories }: HistoryClientProps) 
         }
       />
 
-      <div className="hidden md:flex flex-wrap gap-3 mb-6">
+      <div className="hidden md:flex flex-wrap items-center gap-3 mb-6">
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
@@ -103,6 +136,8 @@ export function HistoryClient({ transactions, categories }: HistoryClientProps) 
           className="w-auto"
           aria-label="End date"
         />
+
+        {showRemovedToggle}
       </div>
 
       {filtered.length === 0 ? (
@@ -114,10 +149,18 @@ export function HistoryClient({ transactions, categories }: HistoryClientProps) 
       ) : (
         <>
           <div className="md:hidden">
-            <MobileTransactionFeed transactions={filtered} />
+            <MobileTransactionFeed
+              transactions={filtered}
+              onRemove={openConfirm}
+              removingId={removing ? pendingTx?.id ?? null : null}
+            />
           </div>
           <div className="hidden md:block rounded-2xl border border-border bg-card p-5">
-            <TransactionList transactions={filtered} />
+            <TransactionList
+              transactions={filtered}
+              onRemove={openConfirm}
+              removingId={removing ? pendingTx?.id ?? null : null}
+            />
           </div>
         </>
       )}
@@ -185,7 +228,24 @@ export function HistoryClient({ transactions, categories }: HistoryClientProps) 
             />
           </div>
         </div>
+
+        {showRemovedToggle}
       </MobileFilterSheet>
+
+      {confirmContent && (
+        <ConfirmDialog
+          open={confirmOpen}
+          onClose={closeConfirm}
+          onConfirm={confirmRemove}
+          title={confirmContent.title}
+          description={confirmContent.description}
+          confirmLabel="Remove activity"
+          cancelLabel="Cancel"
+          loading={removing}
+          variant="danger"
+          details={confirmContent.details}
+        />
+      )}
     </>
   );
 }

@@ -4,12 +4,14 @@ import type {
   Habit,
   LogHabitResult,
   RedeemRewardResult,
+  ReverseHabitResult,
   Reward,
   XpSummary,
   XpTransaction,
 } from "@/lib/types";
 import type { AppSupabaseClient } from "@/lib/supabase/types";
 import { toDataError } from "@/lib/errors";
+import { filterActivityFeed } from "@/lib/transactions";
 
 export async function getCurrentUser(supabase: AppSupabaseClient) {
   const {
@@ -23,7 +25,7 @@ export async function getCurrentUser(supabase: AppSupabaseClient) {
 export async function getXpSummary(supabase: AppSupabaseClient): Promise<XpSummary> {
   const { data, error } = await supabase
     .from("xp_transactions")
-    .select("bank_xp_change, transaction_type");
+    .select("bank_xp_change, transaction_type, reversed_at");
 
   if (error) throw toDataError(error);
 
@@ -35,6 +37,7 @@ export async function getXpSummary(supabase: AppSupabaseClient): Promise<XpSumma
 
   for (const t of transactions) {
     currentBalance += t.bank_xp_change;
+    if (t.reversed_at) continue;
     if (t.transaction_type === "good_habit") {
       totalEarned += t.bank_xp_change;
     } else if (t.transaction_type === "bad_habit") {
@@ -65,7 +68,7 @@ export async function getCategorySummaries(
 
   const { data: transactions, error: txError } = await supabase
     .from("xp_transactions")
-    .select("category_id, category_xp_change");
+    .select("category_id, category_xp_change, reversed_at");
 
   if (txError) throw toDataError(txError);
 
@@ -77,12 +80,11 @@ export async function getCategorySummaries(
 
   const xpByCategory = new Map<string, number>();
   for (const tx of transactions ?? []) {
-    if (tx.category_id) {
-      xpByCategory.set(
-        tx.category_id,
-        (xpByCategory.get(tx.category_id) ?? 0) + tx.category_xp_change
-      );
-    }
+    if (tx.reversed_at || !tx.category_id) continue;
+    xpByCategory.set(
+      tx.category_id,
+      (xpByCategory.get(tx.category_id) ?? 0) + tx.category_xp_change
+    );
   }
 
   return (categories ?? []).map((category) => {
@@ -152,10 +154,22 @@ export async function getRecentTransactions(
     .from("xp_transactions")
     .select("*, category:categories(*), habit:habits(*), reward:rewards(*)")
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(limit * 4);
 
   if (error) throw toDataError(error);
-  return (data ?? []) as XpTransaction[];
+  return filterActivityFeed((data ?? []) as XpTransaction[]).slice(0, limit);
+}
+
+export async function reverseHabitTransaction(
+  supabase: AppSupabaseClient,
+  transactionId: string
+): Promise<ReverseHabitResult> {
+  const { data, error } = await supabase.rpc("reverse_habit_transaction", {
+    p_transaction_id: transactionId,
+  });
+
+  if (error) throw toDataError(error);
+  return data as unknown as ReverseHabitResult;
 }
 
 export interface TransactionFilters {

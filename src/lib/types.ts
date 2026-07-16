@@ -6,7 +6,8 @@ export type TransactionType =
   | "good_habit"
   | "bad_habit"
   | "reward_redemption"
-  | "manual_adjustment";
+  | "manual_adjustment"
+  | "habit_reversal";
 
 export interface Profile {
   id: string;
@@ -64,6 +65,9 @@ export interface XpTransaction {
   bank_xp_change: number;
   category_xp_change: number;
   created_at: string;
+  reversal_of?: string | null;
+  reversed_at?: string | null;
+  reversed_by_transaction_id?: string | null;
   category?: Category | null;
   habit?: Habit | null;
   reward?: Reward | null;
@@ -165,6 +169,14 @@ export interface LogHabitResult {
   bank_balance: number;
   level_ups?: number[];
   category_xp_before?: number;
+}
+
+export interface ReverseHabitResult {
+  reversal: XpTransaction;
+  original: XpTransaction;
+  bank_balance: number;
+  category_id: string | null;
+  category_xp: number;
 }
 
 export interface RedeemRewardResult {
@@ -311,6 +323,10 @@ export interface Database {
       redeem_reward: {
         Args: { p_reward_id: string };
         Returns: RedeemRewardResult;
+      };
+      reverse_habit_transaction: {
+        Args: { p_transaction_id: string };
+        Returns: ReverseHabitResult;
       };
       get_bank_balance: {
         Args: { p_user_id: string };

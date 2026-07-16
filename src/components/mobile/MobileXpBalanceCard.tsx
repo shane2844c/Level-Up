@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Zap } from "lucide-react";
+import { getNegativeBalanceMessage } from "@/lib/remove-activity";
 import type { XpSummary } from "@/lib/types";
 
 interface MobileXpBalanceCardProps {
@@ -13,6 +14,8 @@ export function MobileXpBalanceCard({
   weekEarned = 0,
   weekSpent = 0,
 }: MobileXpBalanceCardProps) {
+  const negativeMessage = getNegativeBalanceMessage(summary.currentBalance);
+
   return (
     <div className="rounded-2xl border border-primary/20 bg-card p-5 shadow-card">
       <div className="flex items-center justify-between gap-3 mb-3">
@@ -32,9 +35,13 @@ export function MobileXpBalanceCard({
         </Link>
       </div>
 
-      <p className="text-[2.25rem] leading-none font-bold text-primary text-glow mb-4">
+      <p className="text-[2.25rem] leading-none font-bold text-primary text-glow mb-2">
         {summary.currentBalance.toLocaleString()} XP
       </p>
+
+      {negativeMessage && (
+        <p className="text-sm text-negative mb-4 leading-relaxed">{negativeMessage}</p>
+      )}
 
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-xl bg-background-secondary px-3 py-2.5">
