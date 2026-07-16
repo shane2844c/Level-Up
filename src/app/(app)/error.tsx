@@ -14,8 +14,13 @@ export default function AppError({
 }) {
   const needsMigration =
     error.message.includes("Database tables are not set up") ||
+    error.message.includes("Progress tables are not set up") ||
     error.message.includes("Could not find the table") ||
     isMissingTableError(error);
+
+  const migrationFile = error.message.includes("002_progress_level_events")
+    ? "supabase/migrations/002_progress_level_events.sql"
+    : "supabase/migrations/001_initial_schema.sql";
 
   useEffect(() => {
     console.error("App error:", error);
@@ -38,8 +43,8 @@ export default function AppError({
       <p className="text-sm text-foreground-secondary max-w-md mb-6">
         {needsMigration ? (
           <>
-            Your Supabase project is connected, but the database tables have not
-            been created yet. Run the migration SQL to finish setup.
+            Your Supabase project is connected, but a required database migration
+            has not been run yet.
           </>
         ) : (
           error.message || "An unexpected error occurred. Please try again."
@@ -65,7 +70,7 @@ export default function AppError({
             <li>
               Paste and run the contents of{" "}
               <code className="text-foreground bg-background-secondary px-1.5 py-0.5 rounded">
-                supabase/migrations/001_initial_schema.sql
+                {migrationFile}
               </code>
             </li>
             <li>Return here and refresh the page</li>

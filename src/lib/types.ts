@@ -1,3 +1,5 @@
+import type { LevelProgress } from "@/lib/levels";
+
 export type HabitType = "good" | "bad";
 
 export type TransactionType =
@@ -91,9 +93,78 @@ export interface CategorySummary {
   habitCount: number;
 }
 
+export interface CategoryLevelEvent {
+  id: string;
+  user_id: string;
+  category_id: string;
+  level: number;
+  transaction_id: string;
+  reached_at: string;
+  category?: Category;
+}
+
+export interface ExpandedCategoryProgress {
+  category: Category;
+  totalCategoryXp: number;
+  weekXp: number;
+  goodCompletions: number;
+  topHabit: { name: string; xp: number } | null;
+  activeHabitCount: number;
+}
+
+export interface ProgressOverviewStats {
+  lifetimeCategoryXp: number;
+  weekCategoryXp: number;
+  totalLevelsGained: number;
+  strongestCategory: { category: Category; xp: number } | null;
+}
+
+export interface CategoryXpShare {
+  category: Category;
+  xp: number;
+  percentage: number;
+}
+
+export interface HabitContribution {
+  habitId: string;
+  habitName: string;
+  categoryName: string;
+  categoryId: string;
+  completions: number;
+  totalXp: number;
+}
+
+export interface ChartDataPoint {
+  date: string;
+  categoryId: string;
+  xp: number;
+}
+
+export interface UpcomingMilestone {
+  category: Category;
+  currentLevel: number;
+  nextLevel: number;
+  xpRemaining: number;
+  progressPercent: number;
+  totalXp: number;
+}
+
+export interface CategoryDetailStats {
+  category: Category;
+  totalCategoryXp: number;
+  weekXp: number;
+  monthXp: number;
+  goodCompletions: number;
+  badOccurrences: number;
+  activeHabitCount: number;
+  levelProgress: LevelProgress;
+}
+
 export interface LogHabitResult {
   transaction: XpTransaction;
   bank_balance: number;
+  level_ups?: number[];
+  category_xp_before?: number;
 }
 
 export interface RedeemRewardResult {
@@ -217,6 +288,18 @@ export interface Database {
         Update: {
           redeemed_at?: string;
         };
+      };
+      category_level_events: {
+        Row: CategoryLevelEvent;
+        Insert: {
+          id?: string;
+          user_id: string;
+          category_id: string;
+          level: number;
+          transaction_id: string;
+          reached_at?: string;
+        };
+        Update: Record<string, never>;
       };
     };
     Views: Record<string, never>;

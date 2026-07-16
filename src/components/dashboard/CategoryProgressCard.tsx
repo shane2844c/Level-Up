@@ -1,60 +1,114 @@
-import { getCategoryIcon } from "@/lib/constants";
+import Link from "next/link";
 import { getLevelProgress } from "@/lib/levels";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { TierBadge } from "@/components/progress/TierBadge";
+import { cn } from "@/lib/utils";
 import type { CategorySummary } from "@/lib/types";
+import type { ExpandedCategoryProgress } from "@/lib/types";
+import { ChevronRight } from "lucide-react";
 
 interface CategoryProgressCardProps {
-  summary: CategorySummary;
+  summary: CategorySummary | ExpandedCategoryProgress;
+  expanded?: boolean;
+  href?: string;
 }
 
-export function CategoryProgressCard({ summary }: CategoryProgressCardProps) {
+function isExpanded(
+  summary: CategorySummary | ExpandedCategoryProgress
+): summary is ExpandedCategoryProgress {
+  return "weekXp" in summary;
+}
+
+export function CategoryProgressCard({
+  summary,
+  expanded = false,
+  href,
+}: CategoryProgressCardProps) {
   const { category, totalCategoryXp } = summary;
   const progress = getLevelProgress(totalCategoryXp);
-  const Icon = getCategoryIcon(category.icon);
   const accentColor = category.accent_color ?? "#58C7FF";
 
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5 hover:border-border/80 transition-colors">
+  const content = (
+    <div
+      className={cn(
+        "rounded-2xl border border-border bg-card p-5 transition-colors",
+        href && "hover:border-primary/30 hover:bg-card-elevated",
+        expanded && "p-6"
+      )}
+    >
       <div className="flex items-start gap-3 mb-4">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0"
-          style={{ backgroundColor: `${accentColor}20` }}
-        >
-          <Icon className="h-5 w-5" style={{ color: accentColor }} />
-        </div>
+        <TierBadge
+          tier={progress.tier}
+          iconId={category.icon}
+          accentColor={accentColor}
+          size="md"
+        />
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-foreground truncate">{category.name}</h3>
           <p className="text-sm text-foreground-secondary">
             Level {progress.level} · {progress.tier}
           </p>
         </div>
+        {href && (
+          <ChevronRight className="h-5 w-5 text-muted shrink-0 mt-0.5" />
+        )}
       </div>
 
       {progress.isMaxLevel ? (
         <div className="space-y-2">
-          <p className="text-sm text-foreground-secondary">
-            Level 10 · Master
-          </p>
+          <p className="text-sm text-foreground-secondary">Level 10 · Master</p>
           <p className="text-xs text-muted">Maximum level reached</p>
           <ProgressBar value={100} color={accentColor} />
         </div>
       ) : (
         <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-foreground-secondary">
-              {totalCategoryXp} / {progress.nextLevelThreshold} XP
-            </span>
-            <span className="text-muted text-xs">
-              {progress.xpRemaining} XP until Level {progress.level + 1}
-            </span>
-          </div>
+          <p className="text-sm text-foreground-secondary">
+            {progress.xpInLevel} / {progress.xpRequiredInLevel} XP
+          </p>
           <ProgressBar
-            value={totalCategoryXp - progress.currentLevelMinXp}
-            max={(progress.nextLevelThreshold ?? 0) - progress.currentLevelMinXp}
+            value={progress.xpInLevel}
+            max={progress.xpRequiredInLevel}
             color={accentColor}
           />
+          <p className="text-xs text-muted">
+            {progress.xpRemaining} XP until Level {progress.level + 1}
+          </p>
+        </div>
+      )}
+
+      <p className="text-xs text-muted mt-3">
+        {totalCategoryXp.toLocaleString()} permanent XP
+      </p>
+
+      {expanded && isExpanded(summary) && (
+        <div className="grid grid-cols-2 gap-3 mt-5 pt-5 border-t border-border">
+          <div>
+            <p className="text-xs text-muted uppercase tracking-wide">This week</p>
+            <p className="text-sm font-medium text-positive mt-0.5">+{summary.weekXp} XP</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted uppercase tracking-wide">Completions</p>
+            <p className="text-sm font-medium text-foreground mt-0.5">
+              {summary.goodCompletions}
+            </p>
+          </div>
+          {summary.topHabit && (
+            <div className="col-span-2">
+              <p className="text-xs text-muted uppercase tracking-wide">Top habit</p>
+              <p className="text-sm text-foreground-secondary mt-0.5 truncate">
+                {summary.topHabit.name}{" "}
+                <span className="text-positive">+{summary.topHabit.xp} XP</span>
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
+
+  if (href) {
+    return <Link href={href}>{content}</Link>;
+  }
+
+  return content;
 }

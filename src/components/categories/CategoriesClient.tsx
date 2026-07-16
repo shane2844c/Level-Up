@@ -8,8 +8,8 @@ import { CategoryForm } from "@/components/categories/CategoryForm";
 import { FormModal } from "@/components/ui/FormModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { getCategoryIcon } from "@/lib/constants";
 import { getLevelProgress } from "@/lib/levels";
+import { TierBadge } from "@/components/progress/TierBadge";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/Toast";
 import type { Category, CategorySummary, Habit } from "@/lib/types";
@@ -99,7 +99,6 @@ export function CategoriesClient({
           {activeSummaries.map((summary) => {
             const { category, totalCategoryXp, habitCount } = summary;
             const progress = getLevelProgress(totalCategoryXp);
-            const Icon = getCategoryIcon(category.icon);
             const accent = category.accent_color ?? "#58C7FF";
             const categoryHabits = habits.filter(
               (h) => h.category_id === category.id && h.is_active
@@ -112,12 +111,12 @@ export function CategoriesClient({
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-xl"
-                      style={{ backgroundColor: `${accent}20` }}
-                    >
-                      <Icon className="h-5 w-5" style={{ color: accent }} />
-                    </div>
+                    <TierBadge
+                      tier={progress.tier}
+                      iconId={category.icon}
+                      accentColor={accent}
+                      size="md"
+                    />
                     <div>
                       <h3 className="font-semibold text-foreground">{category.name}</h3>
                       <p className="text-sm text-foreground-secondary">
@@ -150,29 +149,33 @@ export function CategoriesClient({
                 )}
 
                 <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-foreground-secondary">
-                      {totalCategoryXp} permanent XP
-                    </span>
-                    {!progress.isMaxLevel && (
-                      <span className="text-muted text-xs">
-                        {progress.xpRemaining} XP to Level {progress.level + 1}
-                      </span>
-                    )}
-                  </div>
-                  <ProgressBar
-                    value={
-                      progress.isMaxLevel
-                        ? 100
-                        : totalCategoryXp - progress.currentLevelMinXp
-                    }
-                    max={
-                      progress.isMaxLevel
-                        ? 100
-                        : (progress.nextLevelThreshold ?? 0) - progress.currentLevelMinXp
-                    }
-                    color={accent}
-                  />
+                  {progress.isMaxLevel ? (
+                    <>
+                      <p className="text-sm text-foreground-secondary mb-2">
+                        Level 10 · Master · {totalCategoryXp.toLocaleString()} permanent XP
+                      </p>
+                      <ProgressBar value={100} color={accent} />
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-foreground-secondary">
+                          {progress.xpInLevel} / {progress.xpRequiredInLevel} XP
+                        </span>
+                        <span className="text-muted text-xs">
+                          {progress.xpRemaining} XP to Level {progress.level + 1}
+                        </span>
+                      </div>
+                      <ProgressBar
+                        value={progress.xpInLevel}
+                        max={progress.xpRequiredInLevel}
+                        color={accent}
+                      />
+                      <p className="text-xs text-muted mt-2">
+                        {totalCategoryXp.toLocaleString()} permanent XP
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <div className="border-t border-border pt-4">

@@ -1,76 +1,62 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 import { XpBalanceCard } from "@/components/dashboard/XpBalanceCard";
-import { CategoryProgressCard } from "@/components/dashboard/CategoryProgressCard";
 import { HabitCard } from "@/components/habits/HabitCard";
 import { TransactionList } from "@/components/history/TransactionList";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Repeat, FolderOpen } from "lucide-react";
-import type {
-  CategorySummary,
-  Habit,
-  XpSummary,
-  XpTransaction,
-} from "@/lib/types";
+import { ChevronDown, Repeat, TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Habit, XpSummary, XpTransaction } from "@/lib/types";
 
 interface DashboardClientProps {
   xpSummary: XpSummary;
-  categorySummaries: CategorySummary[];
   habits: Habit[];
   recentTransactions: XpTransaction[];
 }
 
 export function DashboardClient({
   xpSummary: initialXpSummary,
-  categorySummaries: initialCategorySummaries,
   habits: initialHabits,
   recentTransactions: initialTransactions,
 }: DashboardClientProps) {
   const router = useRouter();
+  const [recentActivityOpen, setRecentActivityOpen] = useState(true);
 
   const refresh = useCallback(() => {
     router.refresh();
   }, [router]);
 
-  const habitsByCategory = initialHabits.reduce<Record<string, Habit[]>>(
-    (acc, habit) => {
+  const habitsByCategory = useMemo(() => {
+    const map = new Map<string, { name: string; habits: Habit[] }>();
+    for (const habit of initialHabits) {
       const key = habit.category_id;
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(habit);
-      return acc;
-    },
-    {}
-  );
+      const name = habit.category?.name ?? "Uncategorised";
+      const existing = map.get(key) ?? { name, habits: [] };
+      existing.habits.push(habit);
+      map.set(key, existing);
+    }
+    return Array.from(map.values());
+  }, [initialHabits]);
 
   return (
     <div className="space-y-8">
       <XpBalanceCard summary={initialXpSummary} />
 
       <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">
-          Category progress
-        </h2>
-        {initialCategorySummaries.length === 0 ? (
-          <EmptyState
-            icon={FolderOpen}
-            title="Create your first category"
-            description="Organise your habits into areas such as Health, Work or Mindfulness."
-          />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {initialCategorySummaries.map((summary) => (
-              <CategoryProgressCard key={summary.category.id} summary={summary} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">
-          Quick habit logging
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">
+            Quick habit logging
+          </h2>
+          <Link
+            href="/progress"
+            className="text-sm text-primary hover:text-primary-hover transition-colors"
+          >
+            View progress
+          </Link>
+        </div>
         {initialHabits.length === 0 ? (
           <EmptyState
             icon={Repeat}
@@ -79,38 +65,59 @@ export function DashboardClient({
           />
         ) : (
           <div className="space-y-6">
-            {initialCategorySummaries.map((summary) => {
-              const categoryHabits = habitsByCategory[summary.category.id];
-              if (!categoryHabits?.length) return null;
-              return (
-                <div key={summary.category.id}>
-                  <h3 className="text-sm font-medium text-foreground-secondary mb-3">
-                    {summary.category.name}
-                  </h3>
-                  <div className="space-y-2">
-                    {categoryHabits.map((habit) => (
-                      <HabitCard
-                        key={habit.id}
-                        habit={habit}
-                        onLogged={refresh}
-                        compact
-                      />
-                    ))}
-                  </div>
+            {habitsByCategory.map((group) => (
+              <div key={group.name}>
+                <h3 className="text-sm font-medium text-foreground-secondary mb-3">
+                  {group.name}
+                </h3>
+                <div className="space-y-2">
+                  {group.habits.map((habit) => (
+                    <HabitCard
+                      key={habit.id}
+                      habit={habit}
+                      onLogged={refresh}
+                      compact
+                    />
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">
-          Recent activity
-        </h2>
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <TransactionList transactions={initialTransactions} />
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Recent activity</h2>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/progress"
+              className="inline-flex items-center gap-1.5 text-sm text-foreground-secondary hover:text-primary transition-colors"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Progress
+            </Link>
+            <button
+              type="button"
+              onClick={() => setRecentActivityOpen((open) => !open)}
+              aria-expanded={recentActivityOpen}
+              aria-label={recentActivityOpen ? "Collapse recent activity" : "Expand recent activity"}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-foreground-secondary hover:text-foreground hover:border-primary/30 transition-colors"
+            >
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  recentActivityOpen && "rotate-180"
+                )}
+              />
+            </button>
+          </div>
         </div>
+        {recentActivityOpen && (
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <TransactionList transactions={initialTransactions} />
+          </div>
+        )}
       </section>
     </div>
   );

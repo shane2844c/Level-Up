@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import {
   getXpSummary,
-  getCategorySummaries,
   getHabits,
   getRecentTransactions,
+  getCategories,
 } from "@/lib/data";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -12,16 +12,15 @@ import { StarterOnboarding } from "@/components/onboarding/StarterOnboarding";
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const [xpSummary, categorySummaries, habits, recentTransactions] =
-    await Promise.all([
-      getXpSummary(supabase),
-      getCategorySummaries(supabase),
-      getHabits(supabase),
-      getRecentTransactions(supabase, 8),
-    ]);
+  const [xpSummary, habits, recentTransactions, categories] = await Promise.all([
+    getXpSummary(supabase),
+    getHabits(supabase),
+    getRecentTransactions(supabase, 8),
+    getCategories(supabase),
+  ]);
 
   const isEmpty =
-    categorySummaries.length === 0 &&
+    categories.length === 0 &&
     habits.length === 0 &&
     recentTransactions.length === 0;
 
@@ -29,12 +28,11 @@ export default async function DashboardPage() {
     <>
       <PageHeader
         title="Dashboard"
-        description="Log habits, track XP and watch your categories level up."
+        description="Log habits and track your spendable XP."
       />
       {isEmpty && <StarterOnboarding />}
       <DashboardClient
         xpSummary={xpSummary}
-        categorySummaries={categorySummaries}
         habits={habits}
         recentTransactions={recentTransactions}
       />

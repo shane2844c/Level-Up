@@ -10,11 +10,13 @@ import {
   History,
   Settings,
   Zap,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/categories", label: "Categories", icon: FolderOpen },
   { href: "/habits", label: "Habits", icon: Repeat },
   { href: "/rewards", label: "Rewards", icon: Gift },

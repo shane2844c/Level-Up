@@ -4,19 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  FolderOpen,
   Repeat,
   Gift,
-  History,
   Settings,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/habits", label: "Habits", icon: Repeat },
   { href: "/rewards", label: "Rewards", icon: Gift },
-  { href: "/history", label: "History", icon: History },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

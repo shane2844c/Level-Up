@@ -6,6 +6,8 @@ import { cn, formatXp } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { logHabit } from "@/lib/data";
 import { useToast } from "@/components/ui/Toast";
+import { useLevelUpCelebration } from "@/components/progress/LevelUpCelebration";
+import { getCrossedLevels } from "@/lib/levels";
 import type { Habit } from "@/lib/types";
 
 interface HabitCardProps {
@@ -17,6 +19,7 @@ interface HabitCardProps {
 export function HabitCard({ habit, onLogged, compact = false }: HabitCardProps) {
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
+  const { celebrateLevelUps } = useLevelUpCelebration();
   const isGood = habit.habit_type === "good";
 
   const handleLog = async () => {
@@ -26,10 +29,23 @@ export function HabitCard({ habit, onLogged, compact = false }: HabitCardProps) 
       const supabase = createClient();
       const result = await logHabit(supabase, habit.id);
       const change = result.transaction.bank_xp_change;
-      showToast(
-        `${habit.name}: ${formatXp(change)}`,
-        "success"
-      );
+      showToast(`${habit.name}: ${formatXp(change)}`, "success");
+
+      if (isGood && result.level_ups && result.level_ups.length > 0) {
+        celebrateLevelUps(
+          habit.category?.name ?? "Category",
+          result.level_ups
+        );
+      } else if (isGood && result.transaction.category_xp_change > 0) {
+        const xpBefore =
+          (result.category_xp_before ?? 0);
+        const xpAfter = xpBefore + result.transaction.category_xp_change;
+        const crossed = getCrossedLevels(xpBefore, xpAfter);
+        if (crossed.length > 0) {
+          celebrateLevelUps(habit.category?.name ?? "Category", crossed);
+        }
+      }
+
       onLogged?.();
     } catch (err) {
       const message =

@@ -26,15 +26,23 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    user = authUser;
+  } catch (error) {
+    console.error("Auth middleware error:", error);
+    return supabaseResponse;
+  }
 
   const pathname = request.nextUrl.pathname;
   const isAuthRoute =
     pathname.startsWith("/login") || pathname.startsWith("/signup");
   const isProtectedRoute =
     pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/progress") ||
     pathname.startsWith("/categories") ||
     pathname.startsWith("/habits") ||
     pathname.startsWith("/rewards") ||

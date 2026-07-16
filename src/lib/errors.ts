@@ -24,9 +24,21 @@ export function isMissingTableError(error: unknown): boolean {
   );
 }
 
+export function isMissingLevelEventsTable(error: unknown): boolean {
+  if (!isSupabaseError(error)) return false;
+  return (
+    isMissingTableError(error) &&
+    (error.message?.includes("category_level_events") ?? false)
+  );
+}
+
 export function formatDataError(error: unknown): string {
+  if (isMissingLevelEventsTable(error)) {
+    return "Progress tables are not set up yet. Run supabase/migrations/002_progress_level_events.sql in your Supabase SQL Editor.";
+  }
+
   if (isMissingTableError(error)) {
-    return "Database tables are not set up yet. Run the SQL migration in your Supabase project.";
+    return "Database tables are not set up yet. Run supabase/migrations/001_initial_schema.sql in your Supabase SQL Editor.";
   }
 
   if (isSupabaseError(error)) {

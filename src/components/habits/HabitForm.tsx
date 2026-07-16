@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/Toast";
+import {
+  MIN_HABIT_XP,
+  MAX_HABIT_XP,
+  validateHabitXp,
+} from "@/lib/levels";
 import type { Category, Habit, HabitType } from "@/lib/types";
 
 interface HabitFormProps {
@@ -19,7 +24,7 @@ export function HabitForm({ habit, categories, onSuccess, onCancel }: HabitFormP
     habit?.category_id ?? categories[0]?.id ?? ""
   );
   const [habitType, setHabitType] = useState<HabitType>(habit?.habit_type ?? "good");
-  const [xpAmount, setXpAmount] = useState(habit?.xp_amount?.toString() ?? "10");
+  const [xpAmount, setXpAmount] = useState(habit?.xp_amount?.toString() ?? "20");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { showToast } = useToast();
@@ -37,8 +42,9 @@ export function HabitForm({ habit, categories, onSuccess, onCancel }: HabitFormP
       return;
     }
     const xp = parseInt(xpAmount, 10);
-    if (isNaN(xp) || xp <= 0 || !Number.isInteger(xp)) {
-      setError("XP must be a whole number greater than zero.");
+    const xpError = validateHabitXp(xp);
+    if (xpError) {
+      setError(xpError);
       return;
     }
 
@@ -164,14 +170,19 @@ export function HabitForm({ habit, categories, onSuccess, onCancel }: HabitFormP
         <input
           id="habit-xp"
           type="number"
-          min={1}
+          min={MIN_HABIT_XP}
+          max={MAX_HABIT_XP}
           step={1}
           value={xpAmount}
           onChange={(e) => setXpAmount(e.target.value)}
           required
         />
         <p className="text-xs text-muted mt-1">
-          Enter a positive number. {habitType === "bad" ? "XP will be deducted when logged." : "XP will be awarded when completed."}
+          Choose XP based on effort. Most habits should be worth 15–30 XP.
+        </p>
+        <p className="text-xs text-muted mt-0.5">
+          Small: 5–10 · Standard: 15–25 · Challenging: 30–40 · Major: 45–50
+          {habitType === "bad" && " · Deducted from spendable XP when logged."}
         </p>
       </div>
 
