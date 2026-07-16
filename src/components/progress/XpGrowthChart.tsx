@@ -93,7 +93,7 @@ export function XpGrowthChart({ data, categories }: XpGrowthChartProps) {
               key={r}
               onClick={() => setRange(r)}
               className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                "min-h-[44px] px-3 py-2 rounded-xl text-xs font-medium transition-colors active:opacity-80",
                 range === r
                   ? "bg-primary/15 text-primary"
                   : "text-muted hover:text-foreground-secondary"

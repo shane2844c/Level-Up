@@ -8,7 +8,7 @@ interface ProgressSummaryStatsProps {
 
 export function ProgressSummaryStats({ stats }: ProgressSummaryStatsProps) {
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
       <StatCard
         label="Lifetime category XP"
         value={stats.lifetimeCategoryXp.toLocaleString()}

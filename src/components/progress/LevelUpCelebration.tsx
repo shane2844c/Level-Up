@@ -57,7 +57,7 @@ export function LevelUpProvider({ children }: { children: ReactNode }) {
     <LevelUpContext.Provider value={{ celebrateLevelUps }}>
       {children}
       {notices.length > 0 && (
-        <div className="fixed top-20 md:top-6 right-4 z-50 flex flex-col gap-2 max-w-sm">
+        <div className="fixed top-[calc(1rem+env(safe-area-inset-top,0px))] md:top-6 right-4 z-50 flex flex-col gap-2 max-w-sm safe-area-pr">
           {notices.map((notice) => (
             <div
               key={notice.id}

@@ -95,7 +95,7 @@ export function CategoriesClient({
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
           {activeSummaries.map((summary) => {
             const { category, totalCategoryXp, habitCount } = summary;
             const progress = getLevelProgress(totalCategoryXp);
@@ -127,7 +127,7 @@ export function CategoriesClient({
                   <div className="flex gap-1">
                     <button
                       onClick={() => openEdit(category)}
-                      className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-background-secondary transition-colors"
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-background-secondary transition-colors active:opacity-80"
                       aria-label="Edit category"
                     >
                       <Pencil className="h-4 w-4" />

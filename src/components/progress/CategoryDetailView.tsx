@@ -39,7 +39,7 @@ export function CategoryDetailView({
     <div className="space-y-8">
       <Link
         href="/progress"
-        className="inline-flex items-center gap-2 text-sm text-foreground-secondary hover:text-foreground transition-colors"
+        className="inline-flex min-h-[44px] items-center gap-2 text-sm text-foreground-secondary hover:text-foreground transition-colors active:opacity-80"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Progress
