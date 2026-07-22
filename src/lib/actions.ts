@@ -70,6 +70,10 @@ export async function seedStarterData() {
 
   if (rewardsError) return { error: "Failed to create starter rewards." };
 
+  revalidatePath("/jars");
+  revalidatePath("/today");
+  revalidatePath("/journey");
+  revalidatePath("/insights");
   revalidatePath("/dashboard");
   revalidatePath("/categories");
   revalidatePath("/habits");

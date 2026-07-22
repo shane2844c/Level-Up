@@ -2,15 +2,15 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Level-Up",
-    short_name: "Level-Up",
-    description: "Gamified habit tracking with XP rewards and category progression.",
-    start_url: "/dashboard",
+    name: "Habit Jars",
+    short_name: "Habit Jars",
+    description: "Build your identity one coin at a time with visual habit jars.",
+    start_url: "/jars",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#111315",
-    theme_color: "#111315",
+    background_color: "#ffffff",
+    theme_color: "#6366f1",
     lang: "en-AU",
     categories: ["productivity", "lifestyle"],
     icons: [

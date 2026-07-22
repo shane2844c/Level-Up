@@ -5,13 +5,13 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Level-Up",
-  description: "Gamified habit tracking with XP rewards and category progression.",
-  applicationName: "Level-Up",
+  title: "Habit Jars",
+  description: "Build your identity one coin at a time with visual habit jars.",
+  applicationName: "Habit Jars",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Level-Up",
+    statusBarStyle: "default",
+    title: "Habit Jars",
   },
   formatDetection: {
     telephone: false,
@@ -22,7 +22,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#111315",
+  themeColor: "#6366f1",
 };
 
 export default function RootLayout({

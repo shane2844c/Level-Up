@@ -128,6 +128,35 @@ export async function getHabits(
   return (data ?? []) as Habit[];
 }
 
+export async function getHabitCompletions(
+  supabase: AppSupabaseClient,
+  habitIds?: string[]
+) {
+  let query = supabase
+    .from("xp_transactions")
+    .select("id, habit_id, created_at")
+    .eq("transaction_type", "good_habit")
+    .is("reversed_at", null)
+    .order("created_at", { ascending: false });
+
+  if (habitIds && habitIds.length > 0) {
+    query = query.in("habit_id", habitIds);
+  }
+
+  const { data, error } = await query;
+  if (error) throw toDataError(error);
+  return data ?? [];
+}
+
+export async function getJarPageData(supabase: AppSupabaseClient) {
+  const habits = await getHabits(supabase, { habitType: "good", activeOnly: true });
+  const habitIds = habits.map((h) => h.id);
+  const completions = habitIds.length
+    ? await getHabitCompletions(supabase, habitIds)
+    : [];
+  return { habits, completions };
+}
+
 export async function getRewards(
   supabase: AppSupabaseClient,
   activeOnly = true

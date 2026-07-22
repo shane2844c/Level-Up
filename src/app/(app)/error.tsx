@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, Database, ExternalLink } from "lucide-react";
-import { isMissingTableError } from "@/lib/errors";
+import { isMissingTableError, isAuthSessionError } from "@/lib/errors";
 
 export default function AppError({
   error,
@@ -17,6 +17,10 @@ export default function AppError({
     error.message.includes("Progress tables are not set up") ||
     error.message.includes("Could not find the table") ||
     isMissingTableError(error);
+
+  const sessionExpired =
+    isAuthSessionError(error) ||
+    error.message.includes("Your session has expired");
 
   const migrationFile = error.message.includes("002_progress_level_events")
     ? "supabase/migrations/002_progress_level_events.sql"
@@ -37,7 +41,11 @@ export default function AppError({
       </div>
 
       <h1 className="text-xl font-semibold text-foreground mb-2">
-        {needsMigration ? "Database setup required" : "Something went wrong"}
+        {needsMigration
+          ? "Database setup required"
+          : sessionExpired
+            ? "Session expired"
+            : "Something went wrong"}
       </h1>
 
       <p className="text-sm text-foreground-secondary max-w-md mb-6">
@@ -46,6 +54,8 @@ export default function AppError({
             Your Supabase project is connected, but a required database migration
             has not been run yet.
           </>
+        ) : sessionExpired ? (
+          "Your sign-in session is no longer valid. Please sign in again to continue."
         ) : (
           error.message || "An unexpected error occurred. Please try again."
         )}
@@ -79,18 +89,29 @@ export default function AppError({
       )}
 
       <div className="flex gap-3">
-        <button
-          onClick={reset}
-          className="px-4 py-2 rounded-lg bg-primary text-background font-medium hover:bg-primary-hover transition-colors"
-        >
-          Try again
-        </button>
-        <Link
-          href="/login"
-          className="px-4 py-2 rounded-lg border border-border text-foreground-secondary hover:text-foreground transition-colors"
-        >
-          Back to login
-        </Link>
+        {sessionExpired ? (
+          <Link
+            href="/login"
+            className="px-4 py-2 rounded-lg bg-primary text-background font-medium hover:bg-primary-hover transition-colors"
+          >
+            Sign in again
+          </Link>
+        ) : (
+          <button
+            onClick={reset}
+            className="px-4 py-2 rounded-lg bg-primary text-background font-medium hover:bg-primary-hover transition-colors"
+          >
+            Try again
+          </button>
+        )}
+        {!sessionExpired && (
+          <Link
+            href="/login"
+            className="px-4 py-2 rounded-lg border border-border text-foreground-secondary hover:text-foreground transition-colors"
+          >
+            Back to login
+          </Link>
+        )}
       </div>
     </div>
   );

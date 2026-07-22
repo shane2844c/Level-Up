@@ -37,6 +37,11 @@ export interface Habit {
   habit_type: HabitType;
   xp_amount: number;
   is_active: boolean;
+  icon?: string | null;
+  accent_color?: string | null;
+  identity_statement?: string | null;
+  frequency?: string | null;
+  target_completions?: number | null;
   created_at: string;
   updated_at: string;
   category?: Category;
@@ -234,6 +239,11 @@ export interface Database {
           habit_type: HabitType;
           xp_amount: number;
           is_active?: boolean;
+          icon?: string | null;
+          accent_color?: string | null;
+          identity_statement?: string | null;
+          frequency?: string | null;
+          target_completions?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -244,6 +254,11 @@ export interface Database {
           habit_type?: HabitType;
           xp_amount?: number;
           is_active?: boolean;
+          icon?: string | null;
+          accent_color?: string | null;
+          identity_statement?: string | null;
+          frequency?: string | null;
+          target_completions?: number | null;
           updated_at?: string;
         };
       };

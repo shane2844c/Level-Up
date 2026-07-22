@@ -1,4 +1,4 @@
-const CACHE_VERSION = "level-up-shell-v1";
+const CACHE_VERSION = "habit-jars-shell-v2";
 
 const STATIC_ASSETS = [
   "/icons/icon-192x192.png",
@@ -15,10 +15,8 @@ function isSupabaseRequest(url) {
 }
 
 function isCacheableStaticAsset(url) {
-  return (
-    url.pathname.startsWith("/icons/") ||
-    url.pathname.startsWith("/_next/static/")
-  );
+  // Only cache PWA icons — never cache Next.js bundles (causes hydration mismatches after deploys).
+  return url.pathname.startsWith("/icons/");
 }
 
 self.addEventListener("install", (event) => {

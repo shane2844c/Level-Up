@@ -32,6 +32,21 @@ export function isMissingLevelEventsTable(error: unknown): boolean {
   );
 }
 
+export function isAuthSessionError(error: unknown): boolean {
+  if (!isSupabaseError(error)) return false;
+  const message = error.message?.toLowerCase() ?? "";
+  return (
+    error.code === "PGRST301" ||
+    error.code === "401" ||
+    message.includes("jwt expired") ||
+    message.includes("invalid jwt") ||
+    message.includes("invalid claim") ||
+    message.includes("session missing") ||
+    message.includes("not authenticated") ||
+    message.includes("refresh_token")
+  );
+}
+
 export function formatDataError(error: unknown): string {
   if (isMissingLevelEventsTable(error)) {
     return "Progress tables are not set up yet. Run supabase/migrations/002_progress_level_events.sql in your Supabase SQL Editor.";
@@ -42,7 +57,7 @@ export function formatDataError(error: unknown): string {
   }
 
   if (isSupabaseError(error)) {
-    if (error.code === "PGRST301" || error.message?.includes("JWT")) {
+    if (isAuthSessionError(error)) {
       return "Your session has expired. Please sign in again.";
     }
     return error.message ?? "Something went wrong loading your data.";
@@ -57,4 +72,8 @@ export function formatDataError(error: unknown): string {
 
 export function toDataError(error: unknown): Error {
   return new Error(formatDataError(error));
+}
+
+export function isSessionExpiredMessage(message: string): boolean {
+  return message.includes("Your session has expired");
 }

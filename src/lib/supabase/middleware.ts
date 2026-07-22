@@ -41,13 +41,17 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute =
     pathname.startsWith("/login") || pathname.startsWith("/signup");
   const isProtectedRoute =
+    pathname.startsWith("/jars") ||
+    pathname.startsWith("/today") ||
+    pathname.startsWith("/journey") ||
+    pathname.startsWith("/insights") ||
+    pathname.startsWith("/settings") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/progress") ||
     pathname.startsWith("/categories") ||
     pathname.startsWith("/habits") ||
     pathname.startsWith("/rewards") ||
-    pathname.startsWith("/history") ||
-    pathname.startsWith("/settings");
+    pathname.startsWith("/history");
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
@@ -57,13 +61,13 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/jars";
     return NextResponse.redirect(url);
   }
 
   if (pathname === "/" && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/jars";
     return NextResponse.redirect(url);
   }
 
